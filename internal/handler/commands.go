@@ -23,13 +23,13 @@ func HandleCommand(args []string) string {
 
 	case "ECHO":
 		if len(args) != 2 {
-			return "-ERR wrong number of arguments for 'ECHO' command\r\n"
+			return "-ERR wrong number of arguments for 'echo' command\r\n"
 		}
 		return fmt.Sprintf("$%d\r\n%s\r\n", len(args[1]), args[1])
 
 	case "SET":
 		if len(args) < 3 {
-			return "-ERR wrong number of arguments for 'SET' command\r\n"
+			return "-ERR wrong number of arguments for 'set' command\r\n"
 		}
 		key := args[1]
 		value := args[2]
@@ -48,7 +48,7 @@ func HandleCommand(args []string) string {
 
 	case "GET":
 		if len(args) != 2 {
-			return "-ERR wrong number of arguments for 'GET' command\r\n"
+			return "-ERR wrong number of arguments for 'get' command\r\n"
 		}
 		key := args[1]
 		entry, ok := entity.Db[key]
@@ -59,7 +59,44 @@ func HandleCommand(args []string) string {
 			delete(entity.Db, key)
 			return "$-1\r\n"
 		}
+
 		return fmt.Sprintf("$%d\r\n%s\r\n", len(entry.Value.(string)), entry.Value)
+
+	case "DEL":
+		if len(args) < 2 {
+			return "-ERR wrong number of arguments for 'del' command\r\n"
+		}
+
+		count := 0
+		for _, key := range args[1:] {
+			if _, ok := entity.Db[key]; ok {
+				delete(entity.Db, key)
+				count++
+			}
+		}
+
+		return fmt.Sprintf(":%d\r\n", count)
+
+	case "TTL":
+		if len(args) != 2 {
+			return "-ERR wrong number of arguments for 'ttl' command\r\n"
+		}
+
+		entry, ok := entity.Db[args[1]]
+		if !ok {
+			return ":-2\r\n"
+		}
+
+		if entry.TTL.IsZero() {
+			return ":-1\r\n"
+		}
+
+		ttl := int(time.Until(entry.TTL).Seconds())
+		if ttl < 0 {
+			return ":-2\r\n"
+		}
+
+		return fmt.Sprintf(":%d\r\n", ttl)
 
 	default:
 		return "-ERR unknown command\r\n"
