@@ -7,9 +7,15 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var db = make(map[string]string)
+type DB struct {
+	Value string
+	TTL   time.Time
+}
+
+var db = make(map[string]DB)
 
 func main() {
 	l, err := net.Listen("tcp", ":6379")
@@ -127,23 +133,37 @@ func handleCommand(args []string) string {
 		}
 		return fmt.Sprintf("$%d\r\n%s\r\n", len(args[1]), args[1])
 	case "SET":
-		if len(args) != 3 {
+		if len(args) < 3 {
 			return "-ERR wrong number of arguments for 'SET' command\r\n"
 		}
 		key := args[1]
 		value := args[2]
-		db[key] = value
+
+		var ttl time.Time
+		if len(args) == 5 && strings.ToUpper(args[3]) == "PX" {
+			ms, err := strconv.Atoi(args[4])
+			if err != nil {
+				return "-ERR PX argument should be a number"
+			}
+			ttl = time.Now().Add(time.Duration(ms) * time.Millisecond)
+		}
+		db[key] = DB{Value: value, TTL: ttl}
+
 		return "+OK\r\n"
 	case "GET":
 		if len(args) != 2 {
 			return "-ERR wrong number of arguments for 'GET' command\r\n"
 		}
 		key := args[1]
-		value, ok := db[key]
+		entry, ok := db[key]
 		if !ok {
 			return "$-1\r\n"
 		}
-		return fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)
+		if !entry.TTL.IsZero() && time.Now().After(entry.TTL) {
+			delete(db, key)
+			return "$-1\r\n"
+		}
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(entry.Value), entry.Value)
 	default:
 		return "-ERR unknown command\r\n"
 	}
