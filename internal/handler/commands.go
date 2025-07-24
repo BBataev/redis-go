@@ -228,13 +228,34 @@ func HandleCommand(args []string) string {
 			return "$-1\r\n"
 		}
 
-		left := slice[0]
-		slice = slice[1:]
+		n := 1
+		if len(args) == 3 {
+			var err error
+			n, err = strconv.Atoi(args[2])
+			if err != nil || n < 0 {
+				return "-ERR syntax error\r\n"
+			}
+		}
+
+		if n > len(slice) {
+			n = len(slice)
+		}
+
+		left := slice[:n]
+		slice = slice[n:]
 
 		entry.Value = slice
 		entity.Db[args[1]] = entry
 
-		return fmt.Sprintf("$%d\r\n%s\r\n", len(left), left)
+		if len(left) == 1 {
+			return fmt.Sprintf("$%d\r\n%s\r\n", len(left[0]), left[0])
+		}
+
+		out := fmt.Sprintf("*%d\r\n", len(left))
+		for _, elem := range left {
+			out += fmt.Sprintf("$%d\r\n%s\r\n", len(elem), elem)
+		}
+		return out
 
 	case "RPOP":
 		if len(args) > 3 || len(args) < 2 {
@@ -255,13 +276,34 @@ func HandleCommand(args []string) string {
 			return "$-1\r\n"
 		}
 
-		right := slice[len(slice)-1]
-		slice = slice[:len(slice)-1]
+		n := 1
+		if len(args) == 3 {
+			var err error
+			n, err = strconv.Atoi(args[2])
+			if err != nil || n < 0 {
+				return "-ERR syntax error\r\n"
+			}
+		}
+
+		if n > len(slice) {
+			n = len(slice)
+		}
+
+		right := slice[len(slice)-n:]
+		slice = slice[:len(slice)-n]
 
 		entry.Value = slice
 		entity.Db[args[1]] = entry
 
-		return fmt.Sprintf("$%d\r\n%s\r\n", len(right), right)
+		if len(right) == 1 {
+			return fmt.Sprintf("$%d\r\n%s\r\n", len(right[0]), right[0])
+		}
+
+		out := fmt.Sprintf("*%d\r\n", len(right))
+		for _, elem := range right {
+			out += fmt.Sprintf("$%d\r\n%s\r\n", len(elem), elem)
+		}
+		return out
 
 	default:
 		return "-ERR unknown command\r\n"
