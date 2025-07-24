@@ -23,7 +23,7 @@ func RESParser(r *bufio.Reader) (interface{}, error) {
 		return nil, fmt.Errorf("unexpecred behaviour, got %s", err)
 	}
 
-	count, err := strconv.Atoi(strings.TrimSuffix(line, "\r\n"))
+	count, err := strconv.Atoi(strings.TrimRight(line, "\r\n"))
 	if err != nil {
 		return nil, fmt.Errorf("unexpecred behaviour, got %s", err)
 	}
@@ -45,7 +45,7 @@ func RESParser(r *bufio.Reader) (interface{}, error) {
 			return nil, fmt.Errorf("unexpecred behaviour, got %s", err)
 		}
 
-		countBulk, err := strconv.Atoi(strings.TrimSuffix(line, "\r\n"))
+		countBulk, err := strconv.Atoi(strings.TrimRight(line, "\r\n"))
 		if err != nil {
 			return nil, fmt.Errorf("unexpecred behaviour, got %s", err)
 		}

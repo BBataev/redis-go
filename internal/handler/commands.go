@@ -120,6 +120,77 @@ func HandleCommand(args []string) string {
 
 		return fmt.Sprintf(":%d\r\n", len(list))
 
+	case "LPUSH":
+		if len(args) < 2 {
+			return "-ERR wrong number of arguments for 'rpush' command\r\n"
+		}
+
+		entry, exists := entity.Db[args[1]]
+		list, ok := []string{}, false
+		if exists {
+			list, ok = entry.Value.([]string)
+		}
+		if !ok {
+			list = []string{}
+		}
+
+		list = append(args[2:], list...)
+
+		entry.Value = list
+		entity.Db[args[1]] = entry
+
+		return fmt.Sprintf(":%d\r\n", len(list))
+
+	case "LRANGE":
+		if len(args) != 4 {
+			return "-ERR wrong number of arguments for 'lrange' command\r\n"
+		}
+
+		entry, ok := entity.Db[args[1]]
+		if !ok {
+			return "*0\r\n"
+		}
+
+		slice, ok := entry.Value.([]string)
+		if !ok {
+			return "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+		}
+
+		lIndex, err := strconv.Atoi(args[2])
+		if err != nil {
+			return "-ERR syntax error\r\n"
+		}
+
+		rIndex, err := strconv.Atoi(args[3])
+		if err != nil {
+			return "-ERR syntax error\r\n"
+		}
+
+		if rIndex >= len(slice) {
+			rIndex = len(slice) - 1
+		}
+
+		if rIndex < -1 {
+			rIndex = len(slice) + rIndex
+		}
+
+		if lIndex < 0 {
+			lIndex = 0
+		}
+
+		if rIndex == -1 {
+			slice = slice[lIndex:]
+		} else {
+			slice = slice[lIndex : rIndex+1]
+		}
+
+		out := fmt.Sprintf("*%d\r\n", len(slice))
+		for _, elem := range slice {
+			out += fmt.Sprintf("$%d\r\n%s\r\n", len(elem), elem)
+		}
+
+		return out
+
 	default:
 		return "-ERR unknown command\r\n"
 	}
