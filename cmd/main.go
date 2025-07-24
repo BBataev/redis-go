@@ -11,12 +11,12 @@ import (
 )
 
 func main() {
-	l, err := net.Listen("tcp", ":6379")
+	l, err := net.Listen("tcp", ":6378")
 	if err != nil {
 		panic(err)
 	}
 	defer l.Close()
-	fmt.Println("Listening on :6379")
+	fmt.Println("Listening on :6378")
 
 	for {
 		conn, err := l.Accept()

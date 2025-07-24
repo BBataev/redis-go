@@ -28,9 +28,10 @@ func HandleCommand(args []string) string {
 		return fmt.Sprintf("$%d\r\n%s\r\n", len(args[1]), args[1])
 
 	case "SET":
-		if len(args) < 3 {
+		if len(args) < 3 || len(args) == 4 {
 			return "-ERR wrong number of arguments for 'set' command\r\n"
 		}
+
 		key := args[1]
 		value := args[2]
 
@@ -97,6 +98,27 @@ func HandleCommand(args []string) string {
 		}
 
 		return fmt.Sprintf(":%d\r\n", ttl)
+
+	case "RPUSH":
+		if len(args) < 2 {
+			return "-ERR wrong number of arguments for 'rpush' command\r\n"
+		}
+
+		entry, exists := entity.Db[args[1]]
+		list, ok := []string{}, false
+		if exists {
+			list, ok = entry.Value.([]string)
+		}
+		if !ok {
+			list = []string{}
+		}
+
+		list = append(list, args[2:]...)
+
+		entry.Value = list
+		entity.Db[args[1]] = entry
+
+		return fmt.Sprintf(":%d\r\n", len(list))
 
 	default:
 		return "-ERR unknown command\r\n"
