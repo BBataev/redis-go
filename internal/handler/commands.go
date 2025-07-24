@@ -199,7 +199,7 @@ func HandleCommand(args []string) string {
 
 		entry, ok := entity.Db[args[1]]
 		if !ok {
-			return "*0\r\n"
+			return ":0\r\n"
 		}
 
 		slice, ok := entry.Value.([]string)
