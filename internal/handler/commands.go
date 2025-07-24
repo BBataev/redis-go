@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/entity"
+	"github.com/codecrafters-io/redis-starter-go/internal/utils"
 )
 
 func HandleCommand(args []string) string {
@@ -135,6 +136,7 @@ func HandleCommand(args []string) string {
 		}
 
 		list = append(args[2:], list...)
+		list = utils.TurnAround(list)
 
 		entry.Value = list
 		entity.Db[args[1]] = entry
@@ -170,19 +172,15 @@ func HandleCommand(args []string) string {
 			rIndex = len(slice) - 1
 		}
 
-		if rIndex < -1 {
+		if rIndex <= -1 {
 			rIndex = len(slice) + rIndex
 		}
 
 		if lIndex < 0 {
-			lIndex = 0
+			lIndex = len(slice) + lIndex
 		}
 
-		if rIndex == -1 {
-			slice = slice[lIndex:]
-		} else {
-			slice = slice[lIndex : rIndex+1]
-		}
+		slice = slice[lIndex : rIndex+1]
 
 		out := fmt.Sprintf("*%d\r\n", len(slice))
 		for _, elem := range slice {
