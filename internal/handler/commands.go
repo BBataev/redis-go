@@ -135,8 +135,7 @@ func HandleCommand(args []string) string {
 			list = []string{}
 		}
 
-		list = append(args[2:], list...)
-		list = utils.TurnAround(list)
+		list = append(utils.TurnAround(args[2:]), list...)
 
 		entry.Value = list
 		entity.Db[args[1]] = entry
