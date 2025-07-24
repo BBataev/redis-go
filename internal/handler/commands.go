@@ -192,6 +192,77 @@ func HandleCommand(args []string) string {
 
 		return out
 
+	case "LLEN":
+		if len(args) != 2 {
+			return "-ERR wrong number of arguments for 'llen' command\r\n"
+		}
+
+		entry, ok := entity.Db[args[1]]
+		if !ok {
+			return "*0\r\n"
+		}
+
+		slice, ok := entry.Value.([]string)
+		if !ok {
+			return "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+		}
+
+		return fmt.Sprintf(":%d\r\n", len(slice))
+
+	case "LPOP":
+		if len(args) > 3 || len(args) < 2 {
+			return "-ERR wrong number of arguments for 'lpop' command\r\n"
+		}
+
+		entry, ok := entity.Db[args[1]]
+		if !ok {
+			return "*0\r\n"
+		}
+
+		slice, ok := entry.Value.([]string)
+		if !ok {
+			return "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+		}
+
+		if len(slice) == 0 {
+			return "$-1\r\n"
+		}
+
+		left := slice[0]
+		slice = slice[1:]
+
+		entry.Value = slice
+		entity.Db[args[1]] = entry
+
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(left), left)
+
+	case "RPOP":
+		if len(args) > 3 || len(args) < 2 {
+			return "-ERR wrong number of arguments for 'rpop' command\r\n"
+		}
+
+		entry, ok := entity.Db[args[1]]
+		if !ok {
+			return "*0\r\n"
+		}
+
+		slice, ok := entry.Value.([]string)
+		if !ok {
+			return "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+		}
+
+		if len(slice) == 0 {
+			return "$-1\r\n"
+		}
+
+		right := slice[len(slice)-1]
+		slice = slice[:len(slice)-1]
+
+		entry.Value = slice
+		entity.Db[args[1]] = entry
+
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(right), right)
+
 	default:
 		return "-ERR unknown command\r\n"
 	}
