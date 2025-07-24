@@ -168,16 +168,20 @@ func HandleCommand(args []string) string {
 			return "-ERR syntax error\r\n"
 		}
 
+		if lIndex <= -len(slice) {
+			lIndex = 0
+		}
+
+		if lIndex < 0 {
+			lIndex = len(slice) + lIndex
+		}
+
 		if rIndex >= len(slice) {
 			rIndex = len(slice) - 1
 		}
 
 		if rIndex <= -1 {
 			rIndex = len(slice) + rIndex
-		}
-
-		if lIndex < 0 {
-			lIndex = len(slice) + lIndex
 		}
 
 		slice = slice[lIndex : rIndex+1]
